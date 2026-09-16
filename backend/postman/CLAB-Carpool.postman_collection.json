@@ -1,0 +1,382 @@
+{
+  "info": {
+    "name": "CLAB Carpool API",
+    "description": "Colección de Postman para la API de carpooling universitario CLAB",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:3000/api/v1"
+    },
+    {
+      "key": "accessToken",
+      "value": ""
+    },
+    {
+      "key": "refreshToken",
+      "value": ""
+    }
+  ],
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{accessToken}}",
+        "type": "string"
+      }
+    ]
+  },
+  "item": [
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "Login",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"carlos.perez@espol.edu.ec\",\n  \"password\": \"Password1!\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/auth/login", "host": ["{{baseUrl}}"], "path": ["auth", "login"] }
+          }
+        },
+        {
+          "name": "Register",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"nuevo@espol.edu.ec\",\n  \"password\": \"Password1!\",\n  \"fullName\": \"Nuevo Estudiante\",\n  \"institutionId\": \"<institution_id>\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/auth/register", "host": ["{{baseUrl}}"], "path": ["auth", "register"] }
+          }
+        },
+        {
+          "name": "Verify Email",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"nuevo@espol.edu.ec\",\n  \"code\": \"<codigo_recibido_por_email>\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/auth/verify-email", "host": ["{{baseUrl}}"], "path": ["auth", "verify-email"] }
+          }
+        },
+        {
+          "name": "Resend Code",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"nuevo@espol.edu.ec\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/auth/resend-code", "host": ["{{baseUrl}}"], "path": ["auth", "resend-code"] }
+          }
+        },
+        {
+          "name": "Refresh Token",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"refreshToken\": \"{{refreshToken}}\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/auth/refresh", "host": ["{{baseUrl}}"], "path": ["auth", "refresh"] }
+          }
+        },
+        {
+          "name": "Logout",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/auth/logout", "host": ["{{baseUrl}}"], "path": ["auth", "logout"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Users",
+      "item": [
+        {
+          "name": "Get Profile",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/users/profile", "host": ["{{baseUrl}}"], "path": ["users", "profile"] }
+          }
+        },
+        {
+          "name": "Update Profile",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"fullName\": \"Carlos Pérez Actualizado\",\n  \"phone\": \"+593987654321\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/users/profile", "host": ["{{baseUrl}}"], "path": ["users", "profile"] }
+          }
+        },
+        {
+          "name": "Get User By Id",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/users/:id", "host": ["{{baseUrl}}"], "path": ["users", ":id"], "variable": [{ "key": "id", "value": "<user_id>" }] }
+          }
+        },
+        {
+          "name": "Verify Institution",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"estudiante@espol.edu.ec\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/users/verify-institution", "host": ["{{baseUrl}}"], "path": ["users", "verify-institution"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Travels",
+      "item": [
+        {
+          "name": "List Available Travels",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/travels?origin=ESPOL&minSeats=1&maxPrice=5",
+              "host": ["{{baseUrl}}"],
+              "path": ["travels"],
+              "query": [
+                { "key": "origin", "value": "ESPOL" },
+                { "key": "minSeats", "value": "1" },
+                { "key": "maxPrice", "value": "5" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Create Travel (Driver)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"origin\": \"Puerta principal ESPOL\",\n  \"destination\": \"Centro de Guayaquil\",\n  \"departureTime\": \"2026-09-10T08:00:00Z\",\n  \"availableSeats\": 3,\n  \"pricePerSeat\": 1.5,\n  \"vehicleId\": \"<vehicle_id>\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/travels", "host": ["{{baseUrl}}"], "path": ["travels"] }
+          }
+        },
+        {
+          "name": "Get Travel By Id",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/travels/:id", "host": ["{{baseUrl}}"], "path": ["travels", ":id"], "variable": [{ "key": "id", "value": "<travel_id>" }] }
+          }
+        },
+        {
+          "name": "Request Travel (Passenger)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"travelId\": \"<travel_id>\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/travels/:id/request", "host": ["{{baseUrl}}"], "path": ["travels", ":id", "request"], "variable": [{ "key": "id", "value": "<travel_id>" }] }
+          }
+        },
+        {
+          "name": "Update Travel Status (Driver)",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"in_progress\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/travels/:id/status", "host": ["{{baseUrl}}"], "path": ["travels", ":id", "status"], "variable": [{ "key": "id", "value": "<travel_id>" }] }
+          }
+        },
+        {
+          "name": "Cancel Travel (Driver)",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/travels/:id", "host": ["{{baseUrl}}"], "path": ["travels", ":id"], "variable": [{ "key": "id", "value": "<travel_id>" }] }
+          }
+        },
+        {
+          "name": "My Travels",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/travels/my-travels", "host": ["{{baseUrl}}"], "path": ["travels", "my-travels"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Chats",
+      "item": [
+        {
+          "name": "List Chats",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/chats", "host": ["{{baseUrl}}"], "path": ["chats"] }
+          }
+        },
+        {
+          "name": "Get Active Chat",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/chats/active?travelId=<travel_id>",
+              "host": ["{{baseUrl}}"],
+              "path": ["chats", "active"],
+              "query": [{ "key": "travelId", "value": "<travel_id>" }]
+            }
+          }
+        },
+        {
+          "name": "Get Messages",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/chats/:id/messages", "host": ["{{baseUrl}}"], "path": ["chats", ":id", "messages"], "variable": [{ "key": "id", "value": "<chat_id>" }] }
+          }
+        },
+        {
+          "name": "Send Message",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"chatId\": \"<chat_id>\",\n  \"content\": \"Hola, nos vemos en la puerta principal\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/chats/:id/messages", "host": ["{{baseUrl}}"], "path": ["chats", ":id", "messages"], "variable": [{ "key": "id", "value": "<chat_id>" }] }
+          }
+        },
+        {
+          "name": "Request PIN (Driver)",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/chats/:id/pin-request", "host": ["{{baseUrl}}"], "path": ["chats", ":id", "pin-request"], "variable": [{ "key": "id", "value": "<chat_id>" }] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Ratings",
+      "item": [
+        {
+          "name": "Rate Trip",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"travelId\": \"<travel_id>\",\n  \"score\": 5,\n  \"comment\": \"Excelente viaje\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/ratings", "host": ["{{baseUrl}}"], "path": ["ratings"] }
+          }
+        },
+        {
+          "name": "Get User Ratings",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/ratings/user/:userId", "host": ["{{baseUrl}}"], "path": ["ratings", "user", ":userId"], "variable": [{ "key": "userId", "value": "<user_id>" }] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Wallet",
+      "item": [
+        {
+          "name": "Get Balance",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/wallet", "host": ["{{baseUrl}}"], "path": ["wallet"] }
+          }
+        },
+        {
+          "name": "Recharge",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"amount\": 20,\n  \"paymentMethod\": \"tarjeta\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/wallet/recharge", "host": ["{{baseUrl}}"], "path": ["wallet", "recharge"] }
+          }
+        },
+        {
+          "name": "Transactions",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/wallet/transactions?limit=20", "host": ["{{baseUrl}}"], "path": ["wallet", "transactions"], "query": [{ "key": "limit", "value": "20" }] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Vehicles",
+      "item": [
+        {
+          "name": "Register Vehicle (Driver)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"brand\": \"Toyota\",\n  \"model\": \"Corolla\",\n  \"plate\": \"GBA-1234\",\n  \"color\": \"Blanco\",\n  \"seats\": 4\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/vehicles", "host": ["{{baseUrl}}"], "path": ["vehicles"] }
+          }
+        },
+        {
+          "name": "Get My Vehicle",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/vehicles/my-vehicle", "host": ["{{baseUrl}}"], "path": ["vehicles", "my-vehicle"] }
+          }
+        },
+        {
+          "name": "Update Vehicle",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"color\": \"Gris\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/vehicles/:id", "host": ["{{baseUrl}}"], "path": ["vehicles", ":id"], "variable": [{ "key": "id", "value": "<vehicle_id>" }] }
+          }
+        }
+      ]
+    }
+  ]
+}
