@@ -170,4 +170,39 @@ describe('RegisterUseCase', () => {
       'VERIFICATION_CODE',
     );
   });
+
+  it('debe registrar al usuario pero devolver verificationCodeSent: false cuando falla el envío del correo', async () => {
+    userRepository.findByEmail.mockResolvedValue(null);
+    institutionRepository.findById.mockResolvedValue(institution);
+    encryptionService.hash.mockResolvedValue('hashed_password');
+    authService.generateEmailVerificationCode.mockReturnValue('VERIFICATION_CODE');
+    userRepository.create.mockResolvedValue(
+      User.create({
+        id: 'user_new',
+        email: 'nuevo@espol.edu.ec',
+        passwordHash: 'hashed_password',
+        fullName: 'Nuevo Estudiante',
+        institutionId: 'inst_1',
+        isVerified: false,
+        isDriver: false,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      }),
+    );
+    walletRepository.create.mockResolvedValue(
+      Wallet.create({
+        id: 'wallet_1',
+        userId: 'user_new',
+        balance: 0,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      }),
+    );
+    emailService.sendVerificationCode.mockRejectedValue(new Error('SMTP Connection Refused'));
+
+    const result = await useCase.execute(validDto);
+
+    expect(result.isSuccess).toBe(true);
+    expect(result.value.verificationCodeSent).toBe(false);
+  });
 });

@@ -50,7 +50,7 @@ model Institution {
 model Vehicle {
   id        String   @id @default(cuid())
   userId    String   @map("user_id")
-  user      User     @relation(fields: [userId], references: [id])
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   brand     String
   model     String
   plate     String   @unique
@@ -67,9 +67,9 @@ model Vehicle {
 model Travel {
   id             String          @id @default(cuid())
   driverId       String          @map("driver_id")
-  driver         User            @relation("driver_travels", fields: [driverId], references: [id])
+  driver         User            @relation("driver_travels", fields: [driverId], references: [id], onDelete: Cascade)
   vehicleId      String          @map("vehicle_id")
-  vehicle        Vehicle         @relation(fields: [vehicleId], references: [id])
+  vehicle        Vehicle         @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
   origin         String
   destination    String
   departureTime  DateTime        @map("departure_time")
@@ -90,9 +90,9 @@ model Travel {
 model TravelRequest {
   id          String    @id @default(cuid())
   travelId    String    @map("travel_id")
-  travel      Travel    @relation(fields: [travelId], references: [id])
+  travel      Travel    @relation(fields: [travelId], references: [id], onDelete: Cascade)
   passengerId String    @map("passenger_id")
-  passenger   User      @relation(fields: [passengerId], references: [id])
+  passenger   User      @relation(fields: [passengerId], references: [id], onDelete: Cascade)
   status      String    @default("pending")
   requestedAt DateTime  @default(now()) @map("requested_at")
   confirmedAt DateTime? @map("confirmed_at")
@@ -107,11 +107,11 @@ model TravelRequest {
 model Chat {
   id            String    @id @default(cuid())
   travelId      String    @map("travel_id")
-  travel        Travel    @relation(fields: [travelId], references: [id])
+  travel        Travel    @relation(fields: [travelId], references: [id], onDelete: Cascade)
   user1Id       String    @map("user1_id")
-  user1         User      @relation("user1_chats", fields: [user1Id], references: [id])
+  user1         User      @relation("user1_chats", fields: [user1Id], references: [id], onDelete: Cascade)
   user2Id       String    @map("user2_id")
-  user2         User      @relation("user2_chats", fields: [user2Id], references: [id])
+  user2         User      @relation("user2_chats", fields: [user2Id], references: [id], onDelete: Cascade)
   isActive      Boolean   @default(true) @map("is_active")
   lastMessageAt DateTime? @map("last_message_at")
   createdAt     DateTime  @default(now()) @map("created_at")
@@ -124,9 +124,9 @@ model Chat {
 model Message {
   id        String   @id @default(cuid())
   chatId    String   @map("chat_id")
-  chat      Chat     @relation(fields: [chatId], references: [id])
+  chat      Chat     @relation(fields: [chatId], references: [id], onDelete: Cascade)
   senderId  String   @map("sender_id")
-  sender    User     @relation(fields: [senderId], references: [id])
+  sender    User     @relation(fields: [senderId], references: [id], onDelete: Cascade)
   content   String
   type      String   @default("text")
   isRead    Boolean  @default(false) @map("is_read")
@@ -141,11 +141,11 @@ model Message {
 model Rating {
   id        String   @id @default(cuid())
   travelId  String   @map("travel_id")
-  travel    Travel   @relation(fields: [travelId], references: [id])
+  travel    Travel   @relation(fields: [travelId], references: [id], onDelete: Cascade)
   raterId   String   @map("rater_id")
-  rater     User     @relation("rater_ratings", fields: [raterId], references: [id])
+  rater     User     @relation("rater_ratings", fields: [raterId], references: [id], onDelete: Cascade)
   ratedId   String   @map("rated_id")
-  rated     User     @relation("rated_ratings", fields: [ratedId], references: [id])
+  rated     User     @relation("rated_ratings", fields: [ratedId], references: [id], onDelete: Cascade)
   score     Int
   comment   String?
   createdAt DateTime @default(now()) @map("created_at")
@@ -157,7 +157,7 @@ model Rating {
 model Wallet {
   id           String        @id @default(cuid())
   userId       String        @unique @map("user_id")
-  user         User          @relation(fields: [userId], references: [id])
+  user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
   balance      Decimal       @default(0)
   createdAt    DateTime      @default(now()) @map("created_at")
   updatedAt    DateTime      @updatedAt @map("updated_at")
@@ -169,9 +169,9 @@ model Wallet {
 model Transaction {
   id          String   @id @default(cuid())
   walletId    String   @map("wallet_id")
-  wallet      Wallet   @relation(fields: [walletId], references: [id])
+  wallet      Wallet   @relation(fields: [walletId], references: [id], onDelete: Cascade)
   userId      String   @map("user_id")
-  user        User     @relation(fields: [userId], references: [id])
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   amount      Decimal
   type        String
   status      String   @default("completed")
@@ -186,9 +186,9 @@ model Transaction {
 model PinValidation {
   id        String   @id @default(cuid())
   userId    String   @map("user_id")
-  user      User     @relation(fields: [userId], references: [id])
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   travelId  String   @map("travel_id")
-  travel    Travel   @relation(fields: [travelId], references: [id])
+  travel    Travel   @relation(fields: [travelId], references: [id], onDelete: Cascade)
   pin       String
   expiresAt DateTime @map("expires_at")
   isUsed    Boolean  @default(false) @map("is_used")

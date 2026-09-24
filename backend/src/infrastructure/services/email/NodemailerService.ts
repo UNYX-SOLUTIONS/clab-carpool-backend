@@ -94,6 +94,7 @@ export class NodemailerService implements IEmailService {
       });
     } catch (error) {
       logger.error('Error enviando email', { error });
+      throw error;
     }
   }
 }

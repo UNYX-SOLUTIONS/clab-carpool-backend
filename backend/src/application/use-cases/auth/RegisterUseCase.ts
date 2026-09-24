@@ -89,10 +89,15 @@ export class RegisterUseCase {
     });
 
     await this.walletRepository.create(user.id);
-
     const verificationCode = this.authService.generateEmailVerificationCode(email);
 
-    await this.emailService.sendVerificationCode(email, user.fullName, verificationCode);
+    let verificationCodeSent = false;
+    try {
+      await this.emailService.sendVerificationCode(email, user.fullName, verificationCode);
+      verificationCodeSent = true;
+    } catch {
+      verificationCodeSent = false;
+    }
 
     return Result.ok({
       userId: user.id,
@@ -100,7 +105,7 @@ export class RegisterUseCase {
       fullName: user.fullName,
       institutionId: institution.id,
       institutionName: institution.name,
-      verificationCodeSent: true,
+      verificationCodeSent,
     });
   }
 }

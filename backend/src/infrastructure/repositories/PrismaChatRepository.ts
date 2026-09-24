@@ -1,5 +1,4 @@
 import { PrismaClient } from '@prisma/client';
-
 import { Chat } from '../../domain/entities/Chat';
 import {
   CreateChatData,
@@ -89,7 +88,7 @@ export class PrismaChatRepository implements IChatRepository {
       orderBy: { updatedAt: 'desc' },
     });
 
-    return chats.map((chat) =>
+    return chats.map((chat: any) =>
       Chat.create({
         id: chat.id,
         travelId: chat.travelId,
