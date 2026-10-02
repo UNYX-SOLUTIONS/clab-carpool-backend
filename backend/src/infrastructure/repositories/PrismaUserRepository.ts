@@ -102,7 +102,6 @@ export class PrismaUserRepository implements IUserRepository {
       },
       include: { institution: true },
     });
-
     return User.create({
       id: user.id,
       email: user.email,

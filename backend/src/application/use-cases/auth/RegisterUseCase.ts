@@ -98,7 +98,6 @@ export class RegisterUseCase {
     } catch {
       verificationCodeSent = false;
     }
-
     return Result.ok({
       userId: user.id,
       email: user.email,

@@ -25,7 +25,6 @@ export class GetProfileUseCase {
     if (!user) {
       return Result.fail(new UserNotFoundException());
     }
-
     return Result.ok({
       id: user.id,
       email: user.email,
