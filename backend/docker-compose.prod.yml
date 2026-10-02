@@ -1,0 +1,104 @@
+name: clab-carpool-prod
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: clab-carpool-postgres-server
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-clab}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env.production}
+      POSTGRES_DB: ${POSTGRES_DB:-clab_carpool}
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    networks:
+      data:
+      db-admin:
+        aliases:
+          - clab-carpool-postgres
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+
+  api:
+    image: clab-carpool-api:local
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    init: true
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      DATABASE_URL: postgresql://${POSTGRES_USER:-clab}:${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env.production}@postgres:5432/${POSTGRES_DB:-clab_carpool}?schema=public
+      JWT_SECRET: ${JWT_SECRET:?Set JWT_SECRET in .env.production}
+      JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET:?Set JWT_REFRESH_SECRET in .env.production}
+      SMTP_HOST: ${SMTP_HOST:-smtp.gmail.com}
+      SMTP_PORT: ${SMTP_PORT:-587}
+      SMTP_USER: ${SMTP_USER:-}
+      SMTP_PASS: ${SMTP_PASS:-}
+      EMAIL_FROM: ${EMAIL_FROM:-no-reply@clab.app}
+      APP_URL: ${APP_URL:-https://api.example.com}
+      FRONTEND_URL: ${FRONTEND_URL:-https://example.com}
+      CORS_ORIGIN: ${CORS_ORIGIN:-https://example.com}
+    expose:
+      - "3000"
+    networks:
+      - data
+      - clab-app
+      - traefik
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=${TRAEFIK_NETWORK:-unyx-workspace-front}"
+      - "traefik.http.routers.clab-api.rule=Host(`${CLAB_API_HOST:?Set CLAB_API_HOST in .env.production}`)"
+      - "traefik.http.routers.clab-api.entrypoints=websecure"
+      - "traefik.http.routers.clab-api.tls=true"
+      - "traefik.http.routers.clab-api.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.clab-api.service=clab-api"
+      - "traefik.http.services.clab-api.loadbalancer.server.port=3000"
+    healthcheck:
+      test:
+        - CMD
+        - node
+        - -e
+        - "fetch('http://127.0.0.1:3000/api/v1/health').then(r => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))"
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+
+  migrate:
+    image: clab-carpool-api:local
+    profiles: ["tools"]
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: postgresql://${POSTGRES_USER:-clab}:${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env.production}@postgres:5432/${POSTGRES_DB:-clab_carpool}?schema=public
+    entrypoint: ["pnpm", "exec", "prisma", "migrate", "deploy"]
+    networks:
+      - data
+
+volumes:
+  postgres-data:
+
+networks:
+  data:
+    driver: bridge
+    internal: true
+  clab-app:
+    external: true
+    name: clab-carpool-app
+  traefik:
+    external: true
+    name: ${TRAEFIK_NETWORK:-unyx-workspace-front}
+  db-admin:
+    external: true
+    name: unyx-db-admin
