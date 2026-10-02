@@ -6,3 +6,8 @@ coverage/
 *.log
 .DS_Store
 postgres-data/
+
+
+# Producción CLAB Carpool
+.env.production
+backups/
