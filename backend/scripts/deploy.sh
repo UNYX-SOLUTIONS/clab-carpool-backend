@@ -7,7 +7,7 @@ ENV_FILE="${ENV_FILE:-.env.production}"
 BACKUP_RETENTION_DAYS="${BACKUP_RETENTION_DAYS:-14}"
 
 cd "$ROOT_DIR"
-
+ 
 fail() {
   printf 'ERROR: %s\n' "$*" >&2
   exit 1
