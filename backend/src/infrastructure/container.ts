@@ -22,6 +22,8 @@ import { RegisterUseCase } from '../application/use-cases/auth/RegisterUseCase';
 import { VerifyEmailUseCase } from '../application/use-cases/auth/VerifyEmailUseCase';
 import { LogoutUseCase } from '../application/use-cases/auth/LogoutUseCase';
 import { RefreshTokenUseCase } from '../application/use-cases/auth/RefreshTokenUseCase';
+import { ResendVerificationCodeUseCase } from '../application/use-cases/auth/ResendVerificationCodeUseCase';
+import { GetInstitutionsUseCase } from '../application/use-cases/institution/GetInstitutionsUseCase';
 import { GetProfileUseCase } from '../application/use-cases/user/GetProfileUseCase';
 import { UpdateProfileUseCase } from '../application/use-cases/user/UpdateProfileUseCase';
 import { GetUserByIdUseCase } from '../application/use-cases/user/GetUserByIdUseCase';
@@ -54,6 +56,9 @@ import { ChatController } from '../presentation/controllers/chat/ChatController'
 import { RatingController } from '../presentation/controllers/rating/RatingController';
 import { WalletController } from '../presentation/controllers/wallet/WalletController';
 import { VehicleController } from '../presentation/controllers/vehicle/VehicleController';
+import { InstitutionController } from '../presentation/controllers/institution/InstitutionController';
+import { env } from './config/env';
+import { parseDurationToMs } from '../shared/utils/stringUtils';
 
 export function buildContainer() {
   const jwtService = new JwtService();
@@ -61,6 +66,9 @@ export function buildContainer() {
   const encryptionService = new BcryptService();
   const emailService = new NodemailerService();
   const pinGenerator = new PinGenerator(6);
+  const verificationCodeTtlMs = parseDurationToMs(
+    env.EMAIL_VERIFICATION_CODE_EXPIRES_IN,
+  );
 
   const userRepository = new PrismaUserRepository(prisma);
   const institutionRepository = new PrismaInstitutionRepository(prisma);
@@ -82,10 +90,23 @@ export function buildContainer() {
     encryptionService,
     emailService,
     authService,
+    verificationCodeTtlMs,
   );
-  const verifyEmailUseCase = new VerifyEmailUseCase(userRepository, authService);
+  const verifyEmailUseCase = new VerifyEmailUseCase(
+    userRepository,
+    encryptionService,
+  );
   const logoutUseCase = new LogoutUseCase();
   const refreshTokenUseCase = new RefreshTokenUseCase(userRepository, authService);
+  const resendVerificationCodeUseCase = new ResendVerificationCodeUseCase(
+    userRepository,
+    encryptionService,
+    emailService,
+    authService,
+    verificationCodeTtlMs,
+  );
+
+  const getInstitutionsUseCase = new GetInstitutionsUseCase(institutionRepository);
 
   const getProfileUseCase = new GetProfileUseCase(userRepository);
   const updateProfileUseCase = new UpdateProfileUseCase(userRepository);
@@ -144,9 +165,7 @@ export function buildContainer() {
       verifyEmailUseCase,
       logoutUseCase,
       refreshTokenUseCase,
-      userRepository,
-      authService,
-      emailService,
+      resendVerificationCodeUseCase,
     ),
     user: new UserController(
       getProfileUseCase,
@@ -181,6 +200,7 @@ export function buildContainer() {
       getMyVehicleUseCase,
       updateVehicleUseCase,
     ),
+    institution: new InstitutionController(getInstitutionsUseCase),
   };
 
   return {
@@ -211,6 +231,8 @@ export function buildContainer() {
       verifyEmailUseCase,
       logoutUseCase,
       refreshTokenUseCase,
+      resendVerificationCodeUseCase,
+      getInstitutionsUseCase,
       getProfileUseCase,
       updateProfileUseCase,
       getUserByIdUseCase,

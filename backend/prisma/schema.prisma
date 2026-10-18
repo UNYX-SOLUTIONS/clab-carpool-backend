@@ -18,6 +18,8 @@ model User {
   isDriver        Boolean         @default(false) @map("is_driver")
   phone           String?
   photoUrl        String?         @map("photo_url")
+  verificationCodeHash      String?   @map("verification_code_hash")
+  verificationCodeExpiresAt DateTime? @map("verification_code_expires_at")
   createdAt       DateTime        @default(now()) @map("created_at")
   updatedAt       DateTime        @updatedAt @map("updated_at")
   vehicles        Vehicle[]

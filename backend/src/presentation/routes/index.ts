@@ -10,6 +10,7 @@ import { chatRoutes } from './chat.routes';
 import { ratingRoutes } from './rating.routes';
 import { walletRoutes } from './wallet.routes';
 import { vehicleRoutes } from './vehicle.routes';
+import { institutionRoutes } from './institution.routes';
 
 export function apiRoutes(container: Container): Router {
   const router = Router();
@@ -22,6 +23,7 @@ export function apiRoutes(container: Container): Router {
   });
 
   router.use('/auth', authRoutes(container));
+  router.use('/institutions', institutionRoutes(container));
   router.use('/users', userRoutes(container));
   router.use('/travels', travelRoutes(container));
   router.use('/chats', chatRoutes(container));

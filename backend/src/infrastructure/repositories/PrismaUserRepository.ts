@@ -173,4 +173,49 @@ export class PrismaUserRepository implements IUserRepository {
       data: { passwordHash },
     });
   }
+
+  async setVerificationCode(
+    id: string,
+    codeHash: string,
+    expiresAt: Date,
+  ): Promise<void> {
+    await this.prisma.user.update({
+      where: { id },
+      data: {
+        verificationCodeHash: codeHash,
+        verificationCodeExpiresAt: expiresAt,
+      },
+    });
+  }
+
+  async clearVerificationCode(id: string): Promise<void> {
+    await this.prisma.user.update({
+      where: { id },
+      data: {
+        verificationCodeHash: null,
+        verificationCodeExpiresAt: null,
+      },
+    });
+  }
+
+  async getVerificationCode(
+    userId: string,
+  ): Promise<{ codeHash: string; expiresAt: Date } | null> {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: {
+        verificationCodeHash: true,
+        verificationCodeExpiresAt: true,
+      },
+    });
+
+    if (!user?.verificationCodeHash || !user.verificationCodeExpiresAt) {
+      return null;
+    }
+
+    return {
+      codeHash: user.verificationCodeHash,
+      expiresAt: user.verificationCodeExpiresAt,
+    };
+  }
 }

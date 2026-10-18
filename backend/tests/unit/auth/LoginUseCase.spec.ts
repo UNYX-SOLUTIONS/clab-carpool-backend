@@ -26,6 +26,9 @@ describe('LoginUseCase', () => {
     markVerified: jest.fn(),
     markAsDriver: jest.fn(),
     setPasswordHash: jest.fn(),
+    setVerificationCode: jest.fn(),
+    clearVerificationCode: jest.fn(),
+    getVerificationCode: jest.fn(),
   };
 
   const encryptionService: jest.Mocked<IEncryptionService> = {
@@ -38,7 +41,6 @@ describe('LoginUseCase', () => {
     verifyAccessToken: jest.fn(),
     verifyRefreshToken: jest.fn(),
     generateEmailVerificationCode: jest.fn(),
-    verifyEmailVerificationCode: jest.fn(),
   };
 
   const useCase = new LoginUseCase(userRepository, encryptionService, authService);

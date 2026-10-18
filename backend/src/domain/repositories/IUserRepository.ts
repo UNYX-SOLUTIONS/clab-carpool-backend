@@ -9,6 +9,11 @@ export interface CreateUserData {
   photoUrl?: string;
 }
 
+export interface VerificationCodeData {
+  codeHash: string;
+  expiresAt: Date;
+}
+
 export interface IUserRepository {
   create(data: CreateUserData): Promise<User>;
   findById(id: string): Promise<User | null>;
@@ -17,4 +22,7 @@ export interface IUserRepository {
   markVerified(id: string): Promise<User>;
   markAsDriver(id: string): Promise<User>;
   setPasswordHash(id: string, passwordHash: string): Promise<void>;
+  setVerificationCode(id: string, codeHash: string, expiresAt: Date): Promise<void>;
+  clearVerificationCode(id: string): Promise<void>;
+  getVerificationCode(userId: string): Promise<VerificationCodeData | null>;
 }

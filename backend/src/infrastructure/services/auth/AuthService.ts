@@ -1,6 +1,9 @@
-import { IAuthService, AuthTokenPayload, EmailCodePayload, TokenPair } from '../../../application/interfaces/IAuthService';
+import { IAuthService, AuthTokenPayload, TokenPair } from '../../../application/interfaces/IAuthService';
 import { JwtService } from '../jwt/JwtService';
+import { generateRandomDigits } from '../../../shared/utils/stringUtils';
 import { env } from '../../config/env';
+
+const EMAIL_VERIFICATION_CODE_LENGTH = 6;
 
 export class AuthService implements IAuthService {
   constructor(private readonly jwtService: JwtService) {}
@@ -30,8 +33,12 @@ export class AuthService implements IAuthService {
 
   verifyAccessToken(token: string): AuthTokenPayload {
     const payload = this.jwtService.verify<
-      AuthTokenPayload & { sub: string }
+      AuthTokenPayload & { sub?: unknown }
     >(token, this.jwtService.getAccessSecret());
+
+    if (typeof payload.sub !== 'string' || payload.sub.length === 0) {
+      throw new Error('Invalid access token payload: missing subject');
+    }
 
     return {
       userId: payload.sub,
@@ -43,10 +50,14 @@ export class AuthService implements IAuthService {
   }
 
   verifyRefreshToken(token: string): AuthTokenPayload {
-    const payload = this.jwtService.verify<{ sub: string }>(
+    const payload = this.jwtService.verify<{ sub?: unknown }>(
       token,
       this.jwtService.getRefreshSecret(),
     );
+
+    if (typeof payload.sub !== 'string' || payload.sub.length === 0) {
+      throw new Error('Invalid refresh token payload: missing subject');
+    }
 
     return {
       userId: payload.sub,
@@ -57,24 +68,7 @@ export class AuthService implements IAuthService {
     };
   }
 
-  generateEmailVerificationCode(email: string): string {
-    return this.jwtService.sign(
-      { email, purpose: 'email_verification' },
-      this.jwtService.getAccessSecret(),
-      env.EMAIL_VERIFICATION_CODE_EXPIRES_IN,
-    );
-  }
-
-  verifyEmailVerificationCode(token: string): EmailCodePayload {
-    const payload = this.jwtService.verify<EmailCodePayload & { purpose: string }>(
-      token,
-      this.jwtService.getAccessSecret(),
-    );
-
-    if (payload.purpose !== 'email_verification') {
-      throw new Error('Invalid token purpose');
-    }
-
-    return { email: payload.email };
+  generateEmailVerificationCode(): string {
+    return generateRandomDigits(EMAIL_VERIFICATION_CODE_LENGTH);
   }
 }

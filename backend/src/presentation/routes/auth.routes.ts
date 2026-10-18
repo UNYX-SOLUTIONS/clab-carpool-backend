@@ -31,6 +31,18 @@ export function authRoutes(container: Container): Router {
     keyPrefix: 'verify-email',
   });
 
+  const registerLimiter = rateLimiter({
+    windowMs: env.RATE_LIMIT_REGISTER_WINDOW_MS,
+    max: env.RATE_LIMIT_REGISTER_MAX,
+    keyPrefix: 'register',
+  });
+
+  const resendLimiter = rateLimiter({
+    windowMs: env.RATE_LIMIT_RESEND_WINDOW_MS,
+    max: env.RATE_LIMIT_RESEND_MAX,
+    keyPrefix: 'resend-code',
+  });
+
   router.post(
     '/login',
     loginLimiter,
@@ -40,6 +52,7 @@ export function authRoutes(container: Container): Router {
 
   router.post(
     '/register',
+    registerLimiter,
     validate(registerSchema),
     asyncHandler((req, res) => auth.register(req, res)),
   );
@@ -53,6 +66,7 @@ export function authRoutes(container: Container): Router {
 
   router.post(
     '/resend-code',
+    resendLimiter,
     validate(resendCodeSchema),
     asyncHandler((req, res) => auth.resendCode(req, res)),
   );

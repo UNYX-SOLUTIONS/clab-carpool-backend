@@ -18,6 +18,9 @@ describe('RegisterUseCase', () => {
     markVerified: jest.fn(),
     markAsDriver: jest.fn(),
     setPasswordHash: jest.fn(),
+    setVerificationCode: jest.fn(),
+    clearVerificationCode: jest.fn(),
+    getVerificationCode: jest.fn(),
   };
 
   const institutionRepository: jest.Mocked<IInstitutionRepository> = {
@@ -49,7 +52,6 @@ describe('RegisterUseCase', () => {
     verifyAccessToken: jest.fn(),
     verifyRefreshToken: jest.fn(),
     generateEmailVerificationCode: jest.fn(),
-    verifyEmailVerificationCode: jest.fn(),
   };
 
   const useCase = new RegisterUseCase(
@@ -59,6 +61,7 @@ describe('RegisterUseCase', () => {
     encryptionService,
     emailService,
     authService,
+    600000,
   );
 
   const institution = Institution.create({
@@ -129,7 +132,7 @@ describe('RegisterUseCase', () => {
     userRepository.findByEmail.mockResolvedValue(null);
     institutionRepository.findById.mockResolvedValue(institution);
     encryptionService.hash.mockResolvedValue('hashed_password');
-    authService.generateEmailVerificationCode.mockReturnValue('VERIFICATION_CODE');
+    authService.generateEmailVerificationCode.mockReturnValue('123456');
     userRepository.create.mockResolvedValue(
       User.create({
         id: 'user_new',
@@ -164,10 +167,15 @@ describe('RegisterUseCase', () => {
       }),
     );
     expect(walletRepository.create).toHaveBeenCalledWith('user_new');
+    expect(userRepository.setVerificationCode).toHaveBeenCalledWith(
+      'user_new',
+      'hashed_password',
+      expect.any(Date),
+    );
     expect(emailService.sendVerificationCode).toHaveBeenCalledWith(
       'nuevo@espol.edu.ec',
       'Nuevo Estudiante',
-      'VERIFICATION_CODE',
+      '123456',
     );
   });
 
@@ -175,7 +183,7 @@ describe('RegisterUseCase', () => {
     userRepository.findByEmail.mockResolvedValue(null);
     institutionRepository.findById.mockResolvedValue(institution);
     encryptionService.hash.mockResolvedValue('hashed_password');
-    authService.generateEmailVerificationCode.mockReturnValue('VERIFICATION_CODE');
+    authService.generateEmailVerificationCode.mockReturnValue('123456');
     userRepository.create.mockResolvedValue(
       User.create({
         id: 'user_new',

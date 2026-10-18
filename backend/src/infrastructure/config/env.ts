@@ -36,6 +36,12 @@ const envSchema = z.object({
   RATE_LIMIT_LOGIN_MAX: z.coerce.number().int().positive().default(5),
   RATE_LIMIT_VERIFY_WINDOW_MS: z.coerce.number().int().positive().default(900000),
   RATE_LIMIT_VERIFY_MAX: z.coerce.number().int().positive().default(3),
+  RATE_LIMIT_REGISTER_WINDOW_MS: z.coerce.number().int().positive().default(3600000),
+  RATE_LIMIT_REGISTER_MAX: z.coerce.number().int().positive().default(10),
+  RATE_LIMIT_RESEND_WINDOW_MS: z.coerce.number().int().positive().default(900000),
+  RATE_LIMIT_RESEND_MAX: z.coerce.number().int().positive().default(3),
+
+  TRUST_PROXY: z.coerce.number().int().min(0).optional(),
 
   BCRYPT_SALT_ROUNDS: z.coerce.number().int().positive().default(12),
 });

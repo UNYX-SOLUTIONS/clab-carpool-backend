@@ -28,6 +28,7 @@ export class RegisterUseCase {
     private readonly encryptionService: IEncryptionService,
     private readonly emailService: IEmailService,
     private readonly authService: IAuthService,
+    private readonly verificationCodeTtlMs: number,
   ) {}
 
   async execute(dto: RegisterRequestDTO): Promise<Result<RegisterResult>> {
@@ -89,11 +90,26 @@ export class RegisterUseCase {
     });
 
     await this.walletRepository.create(user.id);
-    const verificationCode = this.authService.generateEmailVerificationCode(email);
+
+    const verificationCode = this.authService.generateEmailVerificationCode();
+    const verificationCodeHash = await this.encryptionService.hash(verificationCode);
+    const verificationCodeExpiresAt = new Date(
+      Date.now() + this.verificationCodeTtlMs,
+    );
+
+    await this.userRepository.setVerificationCode(
+      user.id,
+      verificationCodeHash,
+      verificationCodeExpiresAt,
+    );
 
     let verificationCodeSent = false;
     try {
-      await this.emailService.sendVerificationCode(email, user.fullName, verificationCode);
+      await this.emailService.sendVerificationCode(
+        email,
+        user.fullName,
+        verificationCode,
+      );
       verificationCodeSent = true;
     } catch {
       verificationCodeSent = false;

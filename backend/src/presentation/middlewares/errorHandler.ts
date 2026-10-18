@@ -42,9 +42,10 @@ export function errorHandler(
     return;
   }
 
-  const prismaError = err as { code?: string };
+  const prismaError = err as { code?: string; errorCode?: string };
+  const prismaCode = prismaError.code ?? prismaError.errorCode;
 
-  if (prismaError.code === 'P2025') {
+  if (prismaCode === 'P2025') {
     errorResponse(
       res,
       HttpStatus.NOT_FOUND,
@@ -54,7 +55,7 @@ export function errorHandler(
     return;
   }
 
-  if (prismaError.code === 'P2002') {
+  if (prismaCode === 'P2002') {
     errorResponse(
       res,
       HttpStatus.CONFLICT,
@@ -64,7 +65,7 @@ export function errorHandler(
     return;
   }
 
-  if (prismaError.code?.startsWith('P10')) {
+  if (prismaCode?.startsWith('P10')) {
     logger.error('Error de conexión con la base de datos', { error: err });
     errorResponse(
       res,

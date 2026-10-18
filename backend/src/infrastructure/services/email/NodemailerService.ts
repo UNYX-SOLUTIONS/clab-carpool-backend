@@ -27,17 +27,24 @@ export class NodemailerService implements IEmailService {
     fullName: string,
     code: string,
   ): Promise<void> {
-    await this.sendMail({
-      to: email,
-      subject: 'Verifica tu correo institucional - CLAB Carpool',
-      html: this.buildEmailTemplate({
-        title: 'Verifica tu correo institucional',
-        name: fullName,
-        body: `Tu código de verificación es:`,
-        code,
-        note: 'Este código expira en 10 minutos. Si no solicitaste esta verificación, ignora este correo.',
-      }),
-    });
+    try {
+      await this.sendMail({
+        to: email,
+        subject: 'Verifica tu correo institucional - CLAB Carpool',
+        html: this.buildEmailTemplate({
+          title: 'Verifica tu correo institucional',
+          name: fullName,
+          body: `Tu código de verificación es:`,
+          code,
+          note: 'Este código expira en 10 minutos. Si no solicitaste esta verificación, ignora este correo.',
+        }),
+      });
+    } catch (error) {
+      if (env.NODE_ENV === 'development') {
+        logger.warn(`[DEV] Código de verificación para ${email}: ${code}`);
+      }
+      throw error;
+    }
   }
 
   async sendPin(email: string, fullName: string, pin: string): Promise<void> {

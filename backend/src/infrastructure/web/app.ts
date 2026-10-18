@@ -16,6 +16,12 @@ import { HttpStatus } from '../../shared/constants/statusCodes';
 export function createApp(container: Container): Application {
   const app = express();
 
+  const trustProxy = env.TRUST_PROXY ?? (env.NODE_ENV === 'production' ? 1 : 0);
+
+  if (trustProxy > 0) {
+    app.set('trust proxy', trustProxy);
+  }
+
   app.use(helmet());
   app.use(
     cors({

@@ -5,13 +5,10 @@ import { RegisterUseCase } from '../../../application/use-cases/auth/RegisterUse
 import { VerifyEmailUseCase } from '../../../application/use-cases/auth/VerifyEmailUseCase';
 import { LogoutUseCase } from '../../../application/use-cases/auth/LogoutUseCase';
 import { RefreshTokenUseCase } from '../../../application/use-cases/auth/RefreshTokenUseCase';
-import { IAuthService } from '../../../application/interfaces/IAuthService';
-import { IEmailService } from '../../../application/interfaces/IEmailService';
-import { IUserRepository } from '../../../domain/repositories/IUserRepository';
+import { ResendVerificationCodeUseCase } from '../../../application/use-cases/auth/ResendVerificationCodeUseCase';
 import { LoginRequestDTO } from '../../../application/dtos/auth/LoginRequestDTO';
 import { RegisterRequestDTO } from '../../../application/dtos/auth/RegisterRequestDTO';
 import { VerifyEmailRequestDTO } from '../../../application/dtos/auth/VerifyEmailRequestDTO';
-import { normalizeEmail } from '../../../shared/utils/stringUtils';
 import { successResponse, errorResponse } from '../../../shared/utils/responseHandler';
 import { HttpStatus } from '../../../shared/constants/statusCodes';
 
@@ -22,9 +19,7 @@ export class AuthController {
     private readonly verifyEmailUseCase: VerifyEmailUseCase,
     private readonly logoutUseCase: LogoutUseCase,
     private readonly refreshTokenUseCase: RefreshTokenUseCase,
-    private readonly userRepository: IUserRepository,
-    private readonly authService: IAuthService,
-    private readonly emailService: IEmailService,
+    private readonly resendVerificationCodeUseCase: ResendVerificationCodeUseCase,
   ) {}
 
   async login(req: Request, res: Response): Promise<void> {
@@ -68,34 +63,20 @@ export class AuthController {
   }
 
   async resendCode(req: Request, res: Response): Promise<void> {
-    const email = normalizeEmail((req.body as { email: string }).email);
+    const { email } = req.body as { email: string };
 
-    const user = await this.userRepository.findByEmail(email);
+    const result = await this.resendVerificationCodeUseCase.execute(email);
 
-    if (!user) {
-      errorResponse(
-        res,
-        HttpStatus.NOT_FOUND,
-        'Usuario no encontrado',
-        'USER_NOT_FOUND',
-      );
+    if (result.isFailure) {
+      errorResponse(res, result.error.statusCode, result.error.message, result.error.code);
       return;
     }
 
-    if (user.isVerified) {
-      errorResponse(
-        res,
-        HttpStatus.CONFLICT,
-        'El correo ya fue verificado',
-        'ALREADY_VERIFIED',
-      );
-      return;
-    }
-
-    const code = this.authService.generateEmailVerificationCode(user.email);
-    await this.emailService.sendVerificationCode(user.email, user.fullName, code);
-
-    successResponse(res, HttpStatus.OK, 'Código de verificación reenviado');
+    successResponse(
+      res,
+      HttpStatus.OK,
+      'Si el correo está registrado y sin verificar, enviamos un nuevo código de verificación',
+    );
   }
 
   async logout(req: Request, res: Response): Promise<void> {

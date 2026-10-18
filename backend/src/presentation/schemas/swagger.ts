@@ -53,7 +53,11 @@ export const swaggerSpec = {
         required: ['email', 'code'],
         properties: {
           email: { type: 'string', format: 'email' },
-          code: { type: 'string' },
+          code: {
+            type: 'string',
+            pattern: '^[0-9]{6}$',
+            description: 'Código numérico de 6 dígitos enviado al correo',
+          },
         },
       },
       RefreshRequest: {
@@ -148,6 +152,7 @@ export const swaggerSpec = {
   security: [{ bearerAuth: [] }],
   tags: [
     { name: 'Auth', description: 'Autenticación y verificación' },
+    { name: 'Institutions', description: 'Instituciones disponibles para registro' },
     { name: 'Users', description: 'Gestión de usuarios' },
     { name: 'Travels', description: 'Viajes y solicitudes' },
     { name: 'Chats', description: 'Chat interno y PIN de validación' },
@@ -202,6 +207,17 @@ export const swaggerSpec = {
           201: { description: 'Usuario registrado, código enviado' },
           409: { description: 'Correo ya registrado' },
           403: { description: 'Dominio institucional inválido' },
+          429: { description: 'Demasiados intentos' },
+        },
+      },
+    },
+    '/institutions': {
+      get: {
+        tags: ['Institutions'],
+        summary: 'Listar instituciones activas',
+        security: [],
+        responses: {
+          200: { description: 'Lista de instituciones activas' },
         },
       },
     },
@@ -243,8 +259,11 @@ export const swaggerSpec = {
           },
         },
         responses: {
-          200: { description: 'Código reenviado' },
-          404: { description: 'Usuario no encontrado' },
+          200: {
+            description:
+              'Código reenviado si el correo existe y no está verificado (respuesta genérica)',
+          },
+          429: { description: 'Demasiados intentos' },
         },
       },
     },
