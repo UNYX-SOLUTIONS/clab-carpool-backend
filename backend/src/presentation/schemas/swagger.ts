@@ -1,3 +1,5 @@
+import { EMAIL_VERIFICATION_CODE_LENGTH } from '../../shared/constants/authConstants';
+
 export const swaggerSpec = {
   openapi: '3.0.0',
   info: {
@@ -55,8 +57,8 @@ export const swaggerSpec = {
           email: { type: 'string', format: 'email' },
           code: {
             type: 'string',
-            pattern: '^[0-9]{6}$',
-            description: 'Código numérico de 6 dígitos enviado al correo',
+            pattern: `^[0-9]{${EMAIL_VERIFICATION_CODE_LENGTH}}$`,
+            description: `Código numérico de ${EMAIL_VERIFICATION_CODE_LENGTH} dígitos enviado al correo`,
           },
         },
       },

@@ -22,10 +22,40 @@ export function createApp(container: Container): Application {
     app.set('trust proxy', trustProxy);
   }
 
+  const allowedOrigins = env.CORS_ORIGIN.split(',')
+    .map((origin: string) => origin.trim())
+    .filter((origin: string) => origin.length > 0);
+
+  const isDevelopmentOrigin = (origin: string): boolean => {
+    if (env.NODE_ENV === 'production') {
+      return false;
+    }
+
+    try {
+      const url = new URL(origin);
+
+      return (
+        (url.hostname === 'localhost' ||
+          url.hostname === '127.0.0.1' ||
+          url.hostname === '[::1]') &&
+        (url.protocol === 'http:' || url.protocol === 'https:')
+      );
+    } catch {
+      return false;
+    }
+  };
+
   app.use(helmet());
   app.use(
     cors({
-      origin: env.CORS_ORIGIN.split(',').map((origin: string) => origin.trim()),
+      origin: (origin, callback) => {
+        const isAllowed =
+          !origin ||
+          allowedOrigins.includes(origin) ||
+          isDevelopmentOrigin(origin);
+
+        callback(null, isAllowed);
+      },
       credentials: true,
     }),
   );

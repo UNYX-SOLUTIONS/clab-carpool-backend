@@ -1,6 +1,6 @@
 import { VerifyEmailUseCase } from '../../../src/application/use-cases/auth/VerifyEmailUseCase';
 import { IUserRepository } from '../../../src/domain/repositories/IUserRepository';
-import { IEncryptionService } from '../../../src/application/interfaces/IEncryptionService';
+import { IVerificationCodeHasher } from '../../../src/application/interfaces/IVerificationCodeHasher';
 import { User } from '../../../src/domain/entities/User';
 
 const makeUser = (overrides: Partial<{ isVerified: boolean }> = {}) =>
@@ -28,14 +28,15 @@ describe('VerifyEmailUseCase', () => {
     setVerificationCode: jest.fn(),
     clearVerificationCode: jest.fn(),
     getVerificationCode: jest.fn(),
+    incrementVerificationCodeAttempts: jest.fn(),
   };
 
-  const encryptionService: jest.Mocked<IEncryptionService> = {
+  const codeHasher: jest.Mocked<IVerificationCodeHasher> = {
     hash: jest.fn(),
-    compare: jest.fn(),
+    verify: jest.fn(),
   };
 
-  const useCase = new VerifyEmailUseCase(userRepository, encryptionService);
+  const useCase = new VerifyEmailUseCase(userRepository, codeHasher);
 
   const dto = {
     email: 'student@espol.edu.ec',
@@ -46,24 +47,24 @@ describe('VerifyEmailUseCase', () => {
     jest.clearAllMocks();
   });
 
-  it('debe fallar cuando el usuario no existe', async () => {
+  it('debe responder código inválido cuando el usuario no existe', async () => {
     userRepository.findByEmail.mockResolvedValue(null);
 
     const result = await useCase.execute(dto);
 
     expect(result.isFailure).toBe(true);
-    expect(result.error.code).toBe('DOMAIN_ERROR');
-    expect(result.error.statusCode).toBe(404);
+    expect(result.error.code).toBe('INVALID_VERIFICATION_CODE');
+    expect(result.error.statusCode).toBe(400);
   });
 
-  it('debe fallar cuando el correo ya fue verificado', async () => {
+  it('debe responder código inválido cuando el correo ya fue verificado', async () => {
     userRepository.findByEmail.mockResolvedValue(makeUser({ isVerified: true }));
 
     const result = await useCase.execute(dto);
 
     expect(result.isFailure).toBe(true);
-    expect(result.error.code).toBe('ALREADY_VERIFIED');
-    expect(result.error.statusCode).toBe(409);
+    expect(result.error.code).toBe('INVALID_VERIFICATION_CODE');
+    expect(userRepository.getVerificationCode).not.toHaveBeenCalled();
   });
 
   it('debe fallar cuando no existe un código pendiente', async () => {
@@ -79,7 +80,7 @@ describe('VerifyEmailUseCase', () => {
   it('debe fallar y limpiar el código cuando expiró', async () => {
     userRepository.findByEmail.mockResolvedValue(makeUser());
     userRepository.getVerificationCode.mockResolvedValue({
-      codeHash: 'code_hash',
+      codeHash: 'code_digest',
       expiresAt: new Date(Date.now() - 60_000),
     });
 
@@ -91,28 +92,49 @@ describe('VerifyEmailUseCase', () => {
     expect(userRepository.markVerified).not.toHaveBeenCalled();
   });
 
-  it('debe fallar cuando el código no coincide', async () => {
+  it('debe contar el intento fallido y no verificar cuando el código no coincide', async () => {
     userRepository.findByEmail.mockResolvedValue(makeUser());
     userRepository.getVerificationCode.mockResolvedValue({
-      codeHash: 'code_hash',
+      codeHash: 'code_digest',
       expiresAt: new Date(Date.now() + 60_000),
     });
-    encryptionService.compare.mockResolvedValue(false);
+    codeHasher.verify.mockReturnValue(false);
+    userRepository.incrementVerificationCodeAttempts.mockResolvedValue(1);
 
     const result = await useCase.execute(dto);
 
     expect(result.isFailure).toBe(true);
     expect(result.error.code).toBe('INVALID_VERIFICATION_CODE');
+    expect(userRepository.incrementVerificationCodeAttempts).toHaveBeenCalledWith(
+      'user_1',
+    );
+    expect(userRepository.clearVerificationCode).not.toHaveBeenCalled();
+    expect(userRepository.markVerified).not.toHaveBeenCalled();
+  });
+
+  it('debe invalidar el código al alcanzar el máximo de intentos fallidos', async () => {
+    userRepository.findByEmail.mockResolvedValue(makeUser());
+    userRepository.getVerificationCode.mockResolvedValue({
+      codeHash: 'code_digest',
+      expiresAt: new Date(Date.now() + 60_000),
+    });
+    codeHasher.verify.mockReturnValue(false);
+    userRepository.incrementVerificationCodeAttempts.mockResolvedValue(5);
+
+    const result = await useCase.execute(dto);
+
+    expect(result.isFailure).toBe(true);
+    expect(userRepository.clearVerificationCode).toHaveBeenCalledWith('user_1');
     expect(userRepository.markVerified).not.toHaveBeenCalled();
   });
 
   it('debe verificar el correo y limpiar el código usado', async () => {
     userRepository.findByEmail.mockResolvedValue(makeUser());
     userRepository.getVerificationCode.mockResolvedValue({
-      codeHash: 'code_hash',
+      codeHash: 'code_digest',
       expiresAt: new Date(Date.now() + 60_000),
     });
-    encryptionService.compare.mockResolvedValue(true);
+    codeHasher.verify.mockReturnValue(true);
     userRepository.markVerified.mockResolvedValue(makeUser({ isVerified: true }));
 
     const result = await useCase.execute(dto);

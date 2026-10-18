@@ -2,10 +2,10 @@ import { AppError } from '../../../shared/core/AppError';
 import { Result } from '../../../shared/core/Result';
 import { ErrorMessages } from '../../../shared/constants/errorMessages';
 import { HttpStatus } from '../../../shared/constants/statusCodes';
+import { EMAIL_VERIFICATION_MAX_ATTEMPTS } from '../../../shared/constants/authConstants';
 import { normalizeEmail } from '../../../shared/utils/stringUtils';
-import { UserNotFoundException } from '../../../domain/exceptions/UserNotFoundException';
 import { IUserRepository } from '../../../domain/repositories/IUserRepository';
-import { IEncryptionService } from '../../interfaces/IEncryptionService';
+import { IVerificationCodeHasher } from '../../interfaces/IVerificationCodeHasher';
 import { VerifyEmailRequestDTO } from '../../dtos/auth/VerifyEmailRequestDTO';
 
 export interface VerifyEmailResult {
@@ -17,7 +17,7 @@ export interface VerifyEmailResult {
 export class VerifyEmailUseCase {
   constructor(
     private readonly userRepository: IUserRepository,
-    private readonly encryptionService: IEncryptionService,
+    private readonly codeHasher: IVerificationCodeHasher,
   ) {}
 
   async execute(dto: VerifyEmailRequestDTO): Promise<Result<VerifyEmailResult>> {
@@ -25,18 +25,8 @@ export class VerifyEmailUseCase {
 
     const user = await this.userRepository.findByEmail(email);
 
-    if (!user) {
-      return Result.fail(new UserNotFoundException());
-    }
-
-    if (user.isVerified) {
-      return Result.fail(
-        new AppError(
-          'ALREADY_VERIFIED',
-          'El correo ya fue verificado',
-          HttpStatus.CONFLICT,
-        ),
-      );
+    if (!user || user.isVerified) {
+      return Result.fail(this.invalidCodeError());
     }
 
     const verification = await this.userRepository.getVerificationCode(user.id);
@@ -50,12 +40,15 @@ export class VerifyEmailUseCase {
       return Result.fail(this.invalidCodeError());
     }
 
-    const codeMatches = await this.encryptionService.compare(
-      dto.code,
-      verification.codeHash,
-    );
+    if (!this.codeHasher.verify(dto.code, verification.codeHash)) {
+      const attempts = await this.userRepository.incrementVerificationCodeAttempts(
+        user.id,
+      );
 
-    if (!codeMatches) {
+      if (attempts >= EMAIL_VERIFICATION_MAX_ATTEMPTS) {
+        await this.userRepository.clearVerificationCode(user.id);
+      }
+
       return Result.fail(this.invalidCodeError());
     }
 

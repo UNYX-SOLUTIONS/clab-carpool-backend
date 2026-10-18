@@ -25,4 +25,5 @@ export interface IUserRepository {
   setVerificationCode(id: string, codeHash: string, expiresAt: Date): Promise<void>;
   clearVerificationCode(id: string): Promise<void>;
   getVerificationCode(userId: string): Promise<VerificationCodeData | null>;
+  incrementVerificationCodeAttempts(userId: string): Promise<number>;
 }

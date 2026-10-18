@@ -21,6 +21,11 @@ const envSchema = z.object({
   JWT_ACCESS_EXPIRES_IN: z.string().default('7d'),
   JWT_REFRESH_EXPIRES_IN: z.string().default('30d'),
   EMAIL_VERIFICATION_CODE_EXPIRES_IN: z.string().default('10m'),
+  OTP_HASH_SECRET: z.string().min(10).optional(),
+  EMAIL_DEV_CODE_LOG: z
+    .enum(['true', 'false'])
+    .default('false')
+    .transform((value) => value === 'true'),
 
   SMTP_HOST: z.string().default('smtp.gmail.com'),
   SMTP_PORT: z.coerce.number().int().positive().default(587),

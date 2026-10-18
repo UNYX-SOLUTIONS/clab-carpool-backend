@@ -47,6 +47,16 @@ services:
       APP_URL: ${APP_URL:-https://api.example.com}
       FRONTEND_URL: ${FRONTEND_URL:-https://example.com}
       CORS_ORIGIN: ${CORS_ORIGIN:-https://example.com}
+      EMAIL_VERIFICATION_CODE_EXPIRES_IN: ${EMAIL_VERIFICATION_CODE_EXPIRES_IN:-10m}
+      RATE_LIMIT_LOGIN_WINDOW_MS: ${RATE_LIMIT_LOGIN_WINDOW_MS:-900000}
+      RATE_LIMIT_LOGIN_MAX: ${RATE_LIMIT_LOGIN_MAX:-5}
+      RATE_LIMIT_VERIFY_WINDOW_MS: ${RATE_LIMIT_VERIFY_WINDOW_MS:-900000}
+      RATE_LIMIT_VERIFY_MAX: ${RATE_LIMIT_VERIFY_MAX:-3}
+      RATE_LIMIT_REGISTER_WINDOW_MS: ${RATE_LIMIT_REGISTER_WINDOW_MS:-3600000}
+      RATE_LIMIT_REGISTER_MAX: ${RATE_LIMIT_REGISTER_MAX:-10}
+      RATE_LIMIT_RESEND_WINDOW_MS: ${RATE_LIMIT_RESEND_WINDOW_MS:-900000}
+      RATE_LIMIT_RESEND_MAX: ${RATE_LIMIT_RESEND_MAX:-3}
+      TRUST_PROXY: ${TRUST_PROXY:-1}
     expose:
       - "3000"
     networks:
@@ -83,6 +93,19 @@ services:
       NODE_ENV: production
       DATABASE_URL: postgresql://${POSTGRES_USER:-clab}:${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env.production}@postgres:5432/${POSTGRES_DB:-clab_carpool}?schema=public
     entrypoint: ["pnpm", "exec", "prisma", "migrate", "deploy"]
+    networks:
+      - data
+
+  seed-institutions:
+    image: clab-carpool-api:local
+    profiles: ["tools"]
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: postgresql://${POSTGRES_USER:-clab}:${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env.production}@postgres:5432/${POSTGRES_DB:-clab_carpool}?schema=public
+    entrypoint: ["node", "dist/prisma/seed-institutions.js"]
     networks:
       - data
 

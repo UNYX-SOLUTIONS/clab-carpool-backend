@@ -7,8 +7,7 @@ import { IUserRepository } from '../../../domain/repositories/IUserRepository';
 import { IInstitutionRepository } from '../../../domain/repositories/IInstitutionRepository';
 import { IWalletRepository } from '../../../domain/repositories/IWalletRepository';
 import { IEncryptionService } from '../../interfaces/IEncryptionService';
-import { IEmailService } from '../../interfaces/IEmailService';
-import { IAuthService } from '../../interfaces/IAuthService';
+import { IVerificationCodeIssuer } from '../../interfaces/IVerificationCodeIssuer';
 import { RegisterRequestDTO } from '../../dtos/auth/RegisterRequestDTO';
 
 export interface RegisterResult {
@@ -26,9 +25,7 @@ export class RegisterUseCase {
     private readonly institutionRepository: IInstitutionRepository,
     private readonly walletRepository: IWalletRepository,
     private readonly encryptionService: IEncryptionService,
-    private readonly emailService: IEmailService,
-    private readonly authService: IAuthService,
-    private readonly verificationCodeTtlMs: number,
+    private readonly verificationCodeIssuer: IVerificationCodeIssuer,
   ) {}
 
   async execute(dto: RegisterRequestDTO): Promise<Result<RegisterResult>> {
@@ -91,29 +88,8 @@ export class RegisterUseCase {
 
     await this.walletRepository.create(user.id);
 
-    const verificationCode = this.authService.generateEmailVerificationCode();
-    const verificationCodeHash = await this.encryptionService.hash(verificationCode);
-    const verificationCodeExpiresAt = new Date(
-      Date.now() + this.verificationCodeTtlMs,
-    );
+    const verificationCodeSent = await this.verificationCodeIssuer.issue(user);
 
-    await this.userRepository.setVerificationCode(
-      user.id,
-      verificationCodeHash,
-      verificationCodeExpiresAt,
-    );
-
-    let verificationCodeSent = false;
-    try {
-      await this.emailService.sendVerificationCode(
-        email,
-        user.fullName,
-        verificationCode,
-      );
-      verificationCodeSent = true;
-    } catch {
-      verificationCodeSent = false;
-    }
     return Result.ok({
       userId: user.id,
       email: user.email,

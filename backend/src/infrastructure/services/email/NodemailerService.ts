@@ -12,6 +12,9 @@ export class NodemailerService implements IEmailService {
       host: env.SMTP_HOST,
       port: env.SMTP_PORT,
       secure: env.SMTP_PORT === 465,
+      connectionTimeout: 10_000,
+      greetingTimeout: 10_000,
+      socketTimeout: 15_000,
       auth:
         env.SMTP_USER && env.SMTP_PASS
           ? {
@@ -40,7 +43,7 @@ export class NodemailerService implements IEmailService {
         }),
       });
     } catch (error) {
-      if (env.NODE_ENV === 'development') {
+      if (env.EMAIL_DEV_CODE_LOG) {
         logger.warn(`[DEV] Código de verificación para ${email}: ${code}`);
       }
       throw error;

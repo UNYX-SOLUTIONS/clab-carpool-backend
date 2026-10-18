@@ -28,6 +28,12 @@ La cuenta SMTP vacía permite arrancar, pero el envío de verificación por corr
 
 No ejecuta `prisma/seed.ts`: ese seed crea usuarios de demostración con credenciales conocidas. No usarlo en producción.
 
+Las instituciones sí deben existir en producción (son requisito del registro), sin usuarios demo. Después de `prisma migrate deploy`, ejecutar el seed idempotente:
+
+```bash
+docker compose --env-file .env.production -f docker-compose.prod.yml --profile tools run --rm seed-institutions
+```
+
 ## Diferencia respecto al Compose original
 
 El Compose original del proyecto publica `5432` y `4000` en el host y ejecuta el seed de prueba al iniciar la API. Este overlay no publica puertos, requiere contraseña PostgreSQL y separa migraciones del proceso web. No ejecutar ambos Compose sobre el mismo servicio/base de datos sin revisar primero los contenedores y volúmenes existentes en el VPS.

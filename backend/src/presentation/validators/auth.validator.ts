@@ -1,5 +1,7 @@
 import { z } from 'zod';
 
+import { EMAIL_VERIFICATION_CODE_LENGTH } from '../../shared/constants/authConstants';
+
 const passwordSchema = z
   .string()
   .min(8, 'La contraseña debe tener al menos 8 caracteres')
@@ -30,7 +32,11 @@ export const verifyEmailSchema = z.object({
   email: z.string().email('Correo electrónico inválido'),
   code: z
     .string()
-    .regex(/^\d{6}$/, 'El código de verificación debe tener 6 dígitos'),
+    .length(
+      EMAIL_VERIFICATION_CODE_LENGTH,
+      `El código de verificación debe tener ${EMAIL_VERIFICATION_CODE_LENGTH} dígitos`,
+    )
+    .regex(/^\d+$/, 'El código de verificación solo admite dígitos'),
 });
 
 export const resendCodeSchema = z.object({

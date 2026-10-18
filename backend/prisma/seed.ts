@@ -1,6 +1,8 @@
 import { PrismaClient } from '@prisma/client';
 import bcrypt from 'bcryptjs';
 
+import { institutions } from './data/institutions';
+
 const prisma = new PrismaClient();
 
 async function main() {
@@ -29,16 +31,14 @@ async function main() {
 
   const espol = await prisma.institution.create({
     data: {
-      name: 'Escuela Superior Politécnica del Litoral',
-      domain: 'espol.edu.ec',
+      ...institutions[0],
       isActive: true,
     },
   });
 
   const ug = await prisma.institution.create({
     data: {
-      name: 'Universidad de Guayaquil',
-      domain: 'ug.edu.ec',
+      ...institutions[1],
       isActive: true,
     },
   });

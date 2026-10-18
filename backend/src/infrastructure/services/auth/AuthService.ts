@@ -1,9 +1,8 @@
 import { IAuthService, AuthTokenPayload, TokenPair } from '../../../application/interfaces/IAuthService';
 import { JwtService } from '../jwt/JwtService';
 import { generateRandomDigits } from '../../../shared/utils/stringUtils';
+import { EMAIL_VERIFICATION_CODE_LENGTH } from '../../../shared/constants/authConstants';
 import { env } from '../../config/env';
-
-const EMAIL_VERIFICATION_CODE_LENGTH = 6;
 
 export class AuthService implements IAuthService {
   constructor(private readonly jwtService: JwtService) {}

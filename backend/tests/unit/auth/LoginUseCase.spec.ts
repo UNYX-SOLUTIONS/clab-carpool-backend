@@ -29,6 +29,7 @@ describe('LoginUseCase', () => {
     setVerificationCode: jest.fn(),
     clearVerificationCode: jest.fn(),
     getVerificationCode: jest.fn(),
+    incrementVerificationCodeAttempts: jest.fn(),
   };
 
   const encryptionService: jest.Mocked<IEncryptionService> = {

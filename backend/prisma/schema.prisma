@@ -20,6 +20,7 @@ model User {
   photoUrl        String?         @map("photo_url")
   verificationCodeHash      String?   @map("verification_code_hash")
   verificationCodeExpiresAt DateTime? @map("verification_code_expires_at")
+  verificationCodeAttempts  Int       @default(0) @map("verification_code_attempts")
   createdAt       DateTime        @default(now()) @map("created_at")
   updatedAt       DateTime        @updatedAt @map("updated_at")
   vehicles        Vehicle[]

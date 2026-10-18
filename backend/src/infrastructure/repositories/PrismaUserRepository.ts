@@ -184,6 +184,7 @@ export class PrismaUserRepository implements IUserRepository {
       data: {
         verificationCodeHash: codeHash,
         verificationCodeExpiresAt: expiresAt,
+        verificationCodeAttempts: 0,
       },
     });
   }
@@ -194,6 +195,7 @@ export class PrismaUserRepository implements IUserRepository {
       data: {
         verificationCodeHash: null,
         verificationCodeExpiresAt: null,
+        verificationCodeAttempts: 0,
       },
     });
   }
@@ -217,5 +219,15 @@ export class PrismaUserRepository implements IUserRepository {
       codeHash: user.verificationCodeHash,
       expiresAt: user.verificationCodeExpiresAt,
     };
+  }
+
+  async incrementVerificationCodeAttempts(userId: string): Promise<number> {
+    const user = await this.prisma.user.update({
+      where: { id: userId },
+      data: { verificationCodeAttempts: { increment: 1 } },
+      select: { verificationCodeAttempts: true },
+    });
+
+    return user.verificationCodeAttempts;
   }
 }

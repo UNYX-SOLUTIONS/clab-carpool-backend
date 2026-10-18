@@ -3,8 +3,7 @@ import { IUserRepository } from '../../../src/domain/repositories/IUserRepositor
 import { IInstitutionRepository } from '../../../src/domain/repositories/IInstitutionRepository';
 import { IWalletRepository } from '../../../src/domain/repositories/IWalletRepository';
 import { IEncryptionService } from '../../../src/application/interfaces/IEncryptionService';
-import { IEmailService } from '../../../src/application/interfaces/IEmailService';
-import { IAuthService } from '../../../src/application/interfaces/IAuthService';
+import { IVerificationCodeIssuer } from '../../../src/application/interfaces/IVerificationCodeIssuer';
 import { User } from '../../../src/domain/entities/User';
 import { Institution } from '../../../src/domain/entities/Institution';
 import { Wallet } from '../../../src/domain/entities/Wallet';
@@ -21,6 +20,7 @@ describe('RegisterUseCase', () => {
     setVerificationCode: jest.fn(),
     clearVerificationCode: jest.fn(),
     getVerificationCode: jest.fn(),
+    incrementVerificationCodeAttempts: jest.fn(),
   };
 
   const institutionRepository: jest.Mocked<IInstitutionRepository> = {
@@ -42,16 +42,8 @@ describe('RegisterUseCase', () => {
     compare: jest.fn(),
   };
 
-  const emailService: jest.Mocked<IEmailService> = {
-    sendVerificationCode: jest.fn(),
-    sendPin: jest.fn(),
-  };
-
-  const authService: jest.Mocked<IAuthService> = {
-    generateTokenPair: jest.fn(),
-    verifyAccessToken: jest.fn(),
-    verifyRefreshToken: jest.fn(),
-    generateEmailVerificationCode: jest.fn(),
+  const verificationCodeIssuer: jest.Mocked<IVerificationCodeIssuer> = {
+    issue: jest.fn(),
   };
 
   const useCase = new RegisterUseCase(
@@ -59,9 +51,7 @@ describe('RegisterUseCase', () => {
     institutionRepository,
     walletRepository,
     encryptionService,
-    emailService,
-    authService,
-    600000,
+    verificationCodeIssuer,
   );
 
   const institution = Institution.create({
@@ -128,11 +118,11 @@ describe('RegisterUseCase', () => {
     expect(result.error.code).toBe('INVALID_EMAIL_DOMAIN');
   });
 
-  it('debe registrar al usuario, crear monedero y enviar código de verificación', async () => {
+  it('debe registrar al usuario, crear monedero y emitir código de verificación', async () => {
     userRepository.findByEmail.mockResolvedValue(null);
     institutionRepository.findById.mockResolvedValue(institution);
     encryptionService.hash.mockResolvedValue('hashed_password');
-    authService.generateEmailVerificationCode.mockReturnValue('123456');
+    verificationCodeIssuer.issue.mockResolvedValue(true);
     userRepository.create.mockResolvedValue(
       User.create({
         id: 'user_new',
@@ -167,15 +157,8 @@ describe('RegisterUseCase', () => {
       }),
     );
     expect(walletRepository.create).toHaveBeenCalledWith('user_new');
-    expect(userRepository.setVerificationCode).toHaveBeenCalledWith(
-      'user_new',
-      'hashed_password',
-      expect.any(Date),
-    );
-    expect(emailService.sendVerificationCode).toHaveBeenCalledWith(
-      'nuevo@espol.edu.ec',
-      'Nuevo Estudiante',
-      '123456',
+    expect(verificationCodeIssuer.issue).toHaveBeenCalledWith(
+      expect.objectContaining({ id: 'user_new' }),
     );
   });
 
@@ -183,7 +166,7 @@ describe('RegisterUseCase', () => {
     userRepository.findByEmail.mockResolvedValue(null);
     institutionRepository.findById.mockResolvedValue(institution);
     encryptionService.hash.mockResolvedValue('hashed_password');
-    authService.generateEmailVerificationCode.mockReturnValue('123456');
+    verificationCodeIssuer.issue.mockResolvedValue(false);
     userRepository.create.mockResolvedValue(
       User.create({
         id: 'user_new',
@@ -206,7 +189,6 @@ describe('RegisterUseCase', () => {
         updatedAt: new Date(),
       }),
     );
-    emailService.sendVerificationCode.mockRejectedValue(new Error('SMTP Connection Refused'));
 
     const result = await useCase.execute(validDto);
 

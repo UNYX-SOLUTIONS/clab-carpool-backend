@@ -59,6 +59,8 @@ import { VehicleController } from '../presentation/controllers/vehicle/VehicleCo
 import { InstitutionController } from '../presentation/controllers/institution/InstitutionController';
 import { env } from './config/env';
 import { parseDurationToMs } from '../shared/utils/stringUtils';
+import { HmacVerificationCodeHasher } from './services/encryption/HmacVerificationCodeHasher';
+import { VerificationCodeIssuer } from '../application/services/VerificationCodeIssuer';
 
 export function buildContainer() {
   const jwtService = new JwtService();
@@ -66,6 +68,7 @@ export function buildContainer() {
   const encryptionService = new BcryptService();
   const emailService = new NodemailerService();
   const pinGenerator = new PinGenerator(6);
+  const codeHasher = new HmacVerificationCodeHasher();
   const verificationCodeTtlMs = parseDurationToMs(
     env.EMAIL_VERIFICATION_CODE_EXPIRES_IN,
   );
@@ -82,28 +85,28 @@ export function buildContainer() {
   const transactionRepository = new PrismaTransactionRepository(prisma);
   const pinValidationRepository = new PrismaPinValidationRepository(prisma);
 
+  const verificationCodeIssuer = new VerificationCodeIssuer(
+    userRepository,
+    codeHasher,
+    emailService,
+    authService,
+    verificationCodeTtlMs,
+  );
+
   const loginUseCase = new LoginUseCase(userRepository, encryptionService, authService);
   const registerUseCase = new RegisterUseCase(
     userRepository,
     institutionRepository,
     walletRepository,
     encryptionService,
-    emailService,
-    authService,
-    verificationCodeTtlMs,
+    verificationCodeIssuer,
   );
-  const verifyEmailUseCase = new VerifyEmailUseCase(
-    userRepository,
-    encryptionService,
-  );
+  const verifyEmailUseCase = new VerifyEmailUseCase(userRepository, codeHasher);
   const logoutUseCase = new LogoutUseCase();
   const refreshTokenUseCase = new RefreshTokenUseCase(userRepository, authService);
   const resendVerificationCodeUseCase = new ResendVerificationCodeUseCase(
     userRepository,
-    encryptionService,
-    emailService,
-    authService,
-    verificationCodeTtlMs,
+    verificationCodeIssuer,
   );
 
   const getInstitutionsUseCase = new GetInstitutionsUseCase(institutionRepository);
@@ -209,6 +212,7 @@ export function buildContainer() {
       jwtService,
       authService,
       encryptionService,
+      codeHasher,
       emailService,
       pinGenerator,
     },

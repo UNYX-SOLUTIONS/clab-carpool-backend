@@ -1,17 +1,12 @@
 import { Result } from '../../../shared/core/Result';
 import { normalizeEmail } from '../../../shared/utils/stringUtils';
 import { IUserRepository } from '../../../domain/repositories/IUserRepository';
-import { IEncryptionService } from '../../interfaces/IEncryptionService';
-import { IEmailService } from '../../interfaces/IEmailService';
-import { IAuthService } from '../../interfaces/IAuthService';
+import { IVerificationCodeIssuer } from '../../interfaces/IVerificationCodeIssuer';
 
 export class ResendVerificationCodeUseCase {
   constructor(
     private readonly userRepository: IUserRepository,
-    private readonly encryptionService: IEncryptionService,
-    private readonly emailService: IEmailService,
-    private readonly authService: IAuthService,
-    private readonly verificationCodeTtlMs: number,
+    private readonly verificationCodeIssuer: IVerificationCodeIssuer,
   ) {}
 
   async execute(rawEmail: string): Promise<Result<void>> {
@@ -22,27 +17,7 @@ export class ResendVerificationCodeUseCase {
       return Result.ok();
     }
 
-    const verificationCode = this.authService.generateEmailVerificationCode();
-    const verificationCodeHash = await this.encryptionService.hash(verificationCode);
-    const verificationCodeExpiresAt = new Date(
-      Date.now() + this.verificationCodeTtlMs,
-    );
-
-    await this.userRepository.setVerificationCode(
-      user.id,
-      verificationCodeHash,
-      verificationCodeExpiresAt,
-    );
-
-    try {
-      await this.emailService.sendVerificationCode(
-        user.email,
-        user.fullName,
-        verificationCode,
-      );
-    } catch {
-      return Result.ok();
-    }
+    await this.verificationCodeIssuer.issue(user, false);
 
     return Result.ok();
   }
